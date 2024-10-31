@@ -370,6 +370,22 @@ void lifterClass::lift_movaps() {
   SetOperandValue(dest, Rvalue, to_string(blockInfo.runtime_address));
 }
 */
+
+void lifterClass::lift_movdqa() {
+  auto dest = operands[0]; // 128
+  auto src = operands[1];  // 128
+
+  // only legal:
+  // rr
+  // mr
+  // rm
+
+  auto Rvalue = GetOperandValueFP(src, to_string(blockInfo.runtime_address));
+  printvalue(Rvalue.v1);
+  printvalue(Rvalue.v2);
+  SetOperandValueFP(dest, Rvalue, to_string(blockInfo.runtime_address));
+}
+
 void lifterClass::lift_mov() {
   LLVMContext& context = builder.getContext();
   auto dest = operands[0];
@@ -4003,6 +4019,14 @@ void lifterClass::lift_cdqe() {
 void lifterClass::liftInstructionSemantics() {
 
   switch (instruction.mnemonic) {
+
+  case ZYDIS_MNEMONIC_MOVDQU:
+  case ZYDIS_MNEMONIC_MOVUPS:
+  case ZYDIS_MNEMONIC_MOVAPS:
+  case ZYDIS_MNEMONIC_MOVDQA: {
+    lift_movdqa();
+    break;
+  }
   // movs
   // case ZYDIS_MNEMONIC_MOVAPS:
   // case ZYDIS_MNEMONIC_MOVUPS:

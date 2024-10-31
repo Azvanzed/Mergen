@@ -152,6 +152,49 @@ public:
   }
 };
 
+struct simpleFPV {
+  Value* v1;
+  Value* v2;
+};
+class RegisterManagerFP {
+public:
+  enum RegisterIndexFP {
+    XMM0_ = 0,
+    XMM1_,
+    XMM2_,
+    XMM3_,
+    XMM4_,
+    XMM5_,
+    XMM6_,
+    XMM7_,
+    XMM8_,
+    XMM9_,
+    XMM10_,
+    XMM11_,
+    XMM12_,
+    XMM13_,
+    XMM14_,
+    XMM15_,
+    REGISTER_COUNT // Total number of registers
+  };
+  std::array<simpleFPV, REGISTER_COUNT> vec;
+
+  RegisterManagerFP() {}
+  RegisterManagerFP(const RegisterManagerFP& other) : vec(other.vec) {}
+
+  // Overload the [] operator for getting register values
+
+  int getRegisterIndex(const ZydisRegister key) const {
+    return key - ZYDIS_REGISTER_XMM0;
+  }
+
+  simpleFPV& operator[](ZydisRegister key) {
+    int index = getRegisterIndex(key);
+    printvalue2(index);
+    return vec[index];
+  }
+};
+
 struct BBInfo {
   uint64_t runtime_address;
   llvm::BasicBlock* block;
@@ -214,6 +257,7 @@ public:
 
   flagManager FlagList;
   RegisterManager Registers;
+  RegisterManagerFP RegistersFP;
 
   llvm::DomConditionCache* DC = new DomConditionCache();
 
@@ -289,6 +333,8 @@ public:
         buffer(other.buffer),
         FlagList(other.FlagList), // Deep copy handled by unordered_map's copy
                                   // constructor
+        RegistersFP(other.RegistersFP), // Assuming RegisterManager has a copy
+                                        // constructor
         Registers(other.Registers),     // Assuming RegisterManager has a copy
                                         // constructor
         DC(other.DC),                   // Deep copy of DC
@@ -338,6 +384,10 @@ public:
                  const std::string& address);
   std::vector<llvm::Value*> GetRFLAGS();
 
+  simpleFPV GetOperandValueFP(const ZydisDecodedOperand& op,
+                              const std::string& address = "");
+  simpleFPV SetOperandValueFP(const ZydisDecodedOperand& op, simpleFPV value,
+                              const std::string& address = "");
   llvm::Value* GetOperandValue(const ZydisDecodedOperand& op,
                                const int possiblesize,
                                const std::string& address = "");
